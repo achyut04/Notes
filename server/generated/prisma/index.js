@@ -132,7 +132,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\Study\\Projects\\AINotes\\server\\generated\\prisma",
+      "value": "/mnt/d/Study/Projects/AINotes/server/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -141,12 +141,20 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "windows",
+        "value": "debian-openssl-3.0.x",
         "native": true
+      },
+      {
+        "fromEnvVar": null,
+        "value": "windows"
+      },
+      {
+        "fromEnvVar": null,
+        "value": "debian-openssl-3.0.x"
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\Study\\Projects\\AINotes\\server\\prisma\\schema.prisma",
+    "sourceFilePath": "/mnt/d/Study/Projects/AINotes/server/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -169,8 +177,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Note {\n  id        Int       @id @default(autoincrement())\n  title     String\n  content   String\n  createdAt DateTime  @default(now())\n  updatedAt DateTime? @updatedAt\n  userId    Int\n}\n",
-  "inlineSchemaHash": "88295b6c53a37b9eac81dd148fa4c7d2fbae9b0ff481161b4cb03032acd1d4af",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider      = \"prisma-client-js\"\n  output        = \"../generated/prisma\"\n  binaryTargets = [\"native\", \"windows\", \"debian-openssl-3.0.x\"]\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Note {\n  id        Int       @id @default(autoincrement())\n  title     String\n  content   String\n  createdAt DateTime  @default(now())\n  updatedAt DateTime? @updatedAt\n  userId    Int\n}\n",
+  "inlineSchemaHash": "57d236432e581456ca8587f73a92cdedc20fd8cba6953e21c90d58190a8f8aca",
   "copyEngine": true
 }
 
@@ -207,6 +215,10 @@ warnEnvConflicts({
 const PrismaClient = getPrismaClient(config)
 exports.PrismaClient = PrismaClient
 Object.assign(exports, Prisma)
+
+// file annotations for bundling tools to include these files
+path.join(__dirname, "libquery_engine-debian-openssl-3.0.x.so.node");
+path.join(process.cwd(), "generated/prisma/libquery_engine-debian-openssl-3.0.x.so.node")
 
 // file annotations for bundling tools to include these files
 path.join(__dirname, "query_engine-windows.dll.node");

@@ -1,19 +1,38 @@
 const express = require("express");
 const router = express.Router();
-const openai = require("../utils/openai");
+const { chatCompletion } = require("../utils/chatCompletion");
 const { prisma } = require("../utils/db");
+
+// router.post("/summarize", async (req, res) => {
+//   const { content } = req.body;
+//   try {
+//     const response = await openai.chat.completions.create({
+//       model: "gpt-4.1-mini",
+//       messages: [
+//         { role: "user", content: `Summarize this note:\n\n${content}` },
+//       ],
+//     });
+//     res.json({ summary: response.choices[0].message.content });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
 router.post("/summarize", async (req, res) => {
   const { content } = req.body;
+
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
+    const response = await chatCompletion({
+      model: "meta-llama/llama-3.3-70b-instruct:free",
       messages: [
         { role: "user", content: `Summarize this note:\n\n${content}` },
       ],
     });
-    res.json({ summary: response.choices[0].message.content });
+
+    const summary = response.choices[0].message.content;
+    res.json({ summary });
   } catch (error) {
+    console.error("Error during chat completion:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -75,21 +94,21 @@ router.get("/notes", async (req, res) => {
   }
 });
 
+// router.get("/notes/:id", async (req, res) => {
+//   const { id } = req.params;
 
-router.get("/notes/:id", async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const note = await prisma.note.findUnique({
-      where: { id: parseInt(id) },
-    });
-    res.json(note);
-  } catch (error) {
-    console.error("Error fetching note:", error);
-    res.status(500).json({ error: "Failed to fetch note" });
-  }
-});
-
-
+//   try {
+//     const note = await prisma.note.findUnique({
+//       where: { id: parseInt(id) },
+//     });
+//     if (!note) {
+//       return res.status(404).json({ error: "Note not found" });
+//     }
+//     res.json(note);
+//   } catch (error) {
+//     console.error("Error fetching note:", error);
+//     res.status(500).json({ error: "Failed to fetch note" });
+//   }
+// });
 
 module.exports = router;

@@ -5,8 +5,9 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma"
+  binaryTargets = ["native", "windows","debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -15,10 +16,10 @@ datasource db {
 }
 
 model Note {
-  id Int @id @default(autoincrement())
-  title String
-  content String
-  createdAt DateTime @default(now())
+  id        Int       @id @default(autoincrement())
+  title     String
+  content   String
+  createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
-  userId Int
+  userId    Int
 }
