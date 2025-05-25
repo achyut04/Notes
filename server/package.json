@@ -13,14 +13,17 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.8.2",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "nodemon": "^3.1.10",
     "openai": "^4.103.0",
     "server": "file:"
   },
   "devDependencies": {
-    "prisma": "^6.8.2"
+    "prisma": "^6.8.2",
+    "tailwindcss": "^4.1.7"
   }
 }
