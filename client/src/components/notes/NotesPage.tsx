@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { NotesSidebar } from "./NotesSidebar";
 import { NoteEditor } from "./NoteEditor";
 import { notesAPI, Note } from "@/lib/api";
 import { toast } from "sonner";
-import { set } from "react-hook-form";
 
 export const NotesPage = () => {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -12,7 +11,6 @@ export const NotesPage = () => {
   const [summary, setSummary] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const queryClient = useQueryClient();
-  const [isSaving, setIsSaving] = useState(false);
 
   const { data: notes = [], isLoading } = useQuery({
     queryKey: ["notes"],
@@ -109,7 +107,6 @@ export const NotesPage = () => {
       }
     }
 
-    setIsSaving(true);
     try {
       if (selectedNote.id.startsWith("temp-")) {
         await createNoteMutation.mutateAsync({ title, content });
@@ -124,7 +121,6 @@ export const NotesPage = () => {
     } catch (error) {
       toast.error("Failed to save note. Please try again.");
     } finally {
-      setIsSaving(false);
     }
   };
 
@@ -172,7 +168,6 @@ export const NotesPage = () => {
         onDelete={handleDelete}
         onSummarize={handleSummarize}
         summary={summary}
-        isLoading={createNoteMutation.isPending || updateNoteMutation.isPending}
         isSummaryLoading={summarizeMutation.isPending}
         isSaving={createNoteMutation.isPending || updateNoteMutation.isPending}
       />
