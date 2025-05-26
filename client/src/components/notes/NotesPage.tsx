@@ -99,12 +99,12 @@ export const NotesPage = () => {
 
   const handleSave = async (title: string, content: string) => {
     if (!selectedNote) return;
-    
+
     const isTitleEmpty = !title.trim();
     const isContentEmpty = !content.trim();
 
     if (isTitleEmpty && isContentEmpty) {
-      if(!selectedNote.id.startsWith("temp-")) {
+      if (!selectedNote.id.startsWith("temp-")) {
         await deleteNoteMutation.mutateAsync(selectedNote.id);
       }
     }
@@ -174,7 +174,7 @@ export const NotesPage = () => {
         summary={summary}
         isLoading={createNoteMutation.isPending || updateNoteMutation.isPending}
         isSummaryLoading={summarizeMutation.isPending}
-        isSaving={isSaving}
+        isSaving={createNoteMutation.isPending || updateNoteMutation.isPending}
       />
     </div>
   );

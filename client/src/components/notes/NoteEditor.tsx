@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import MDEditor from "@uiw/react-md-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,16 +34,57 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   const [content, setContent] = useState("");
   const [showSidePanel, setShowSidePanel] = useState(false);
   const [activeTab, setActiveTab] = useState("preview");
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedRef = useRef<{ title: string; content: string }>({
+    title: "",
+    content: "",
+  });
 
   useEffect(() => {
     if (note) {
       setTitle(note.title);
       setContent(note.content);
+      lastSavedRef.current = {
+        title: note.title,
+        content: note.content,
+      };
     } else {
       setTitle("");
       setContent("");
+      lastSavedRef.current = { title: "", content: "" };
     }
   }, [note]);
+
+  const performSave = useCallback(
+    async (titleToSave: string, contentToSave: string) => {
+      if (!note) return;
+      if (!titleToSave.trim() && !contentToSave.trim()) {
+        if (!note.id.startsWith("temp-")) {
+          try {
+            await onDelete();
+            toast.success("Empty note deleted");
+          } catch (error) {
+            toast.error("Failed to delete note");
+          }
+        }
+        return;
+      }
+      if (
+        titleToSave === lastSavedRef.current.title &&
+        contentToSave === lastSavedRef.current.content
+      ) {
+        return;
+      }
+
+      try {
+        await onSave(titleToSave || "Untitled", contentToSave);
+        lastSavedRef.current = { title: titleToSave, content: contentToSave };
+      } catch (error) {
+        toast.error("Failed to auto-save note");
+      }
+    },
+    [note, onSave, onDelete]
+  );
 
   useEffect(() => {
     if (summary) {
@@ -53,38 +94,17 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   }, [summary]);
 
   const debouncedSave = useCallback(
-    (() => {
-      let timeoutId: NodeJS.Timeout;
-      return (titleToSave: string, contentToSave: string) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(async () => {
-          if (!note) return;
+    (titleToSave: string, contentToSave: string) => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
 
-          if (!titleToSave.trim() && !contentToSave.trim()) {
-            if (!note.id.startsWith("temp-")) {
-              try {
-                await onDelete();
-                toast.success("Empty note deleted");
-              } catch (error) {
-                toast.error("Failed to delete note");
-              }
-            }
-            return;
-          }
-
-          if (titleToSave.trim() || contentToSave.trim()) {
-            try {
-              await onSave(titleToSave || "Untitled", contentToSave);
-            } catch (error) {
-              toast.error("Failed to auto-save note");
-            }
-          }
-        }, 1000);
-      };
-    })(),
-    [note, onSave, onDelete]
+      saveTimeoutRef.current = setTimeout(() => {
+        performSave(titleToSave, contentToSave);
+      }, 800);
+    },
+    [performSave]
   );
-
   const handleTitleChange = (newTitle: string) => {
     setTitle(newTitle);
     debouncedSave(newTitle, content);
