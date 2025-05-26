@@ -42,20 +42,45 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
     "rich-text"
   );
 
+  const isActivelyEditingRef = useRef(false);
+  const activeEditingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
+  const markAsActivelyEditing = useCallback(() => {
+    isActivelyEditingRef.current = true;
+
+    if (activeEditingTimeoutRef.current) {
+      clearTimeout(activeEditingTimeoutRef.current);
+    }
+
+    activeEditingTimeoutRef.current = setTimeout(() => {
+      isActivelyEditingRef.current = false;
+    }, 2000);
+  }, []);
+
   useEffect(() => {
-    if (note) {
-      setTitle(note.title);
-      setContent(note.content);
-      lastSavedRef.current = {
-        title: note.title,
-        content: note.content,
-      };
-    } else {
+    if (note && !isActivelyEditingRef.current) {
+      const isDifferentNote =
+        !lastSavedRef.current ||
+        (note.id !== lastSavedRef.current.title &&
+          note.id !== lastSavedRef.current.content);
+
+      if (isDifferentNote || (title === "" && content === "")) {
+        setTitle(note.title);
+        setContent(note.content);
+        lastSavedRef.current = {
+          title: note.title,
+          content: note.content,
+        };
+      }
+    } else if (!note) {
       setTitle("");
       setContent("");
       lastSavedRef.current = { title: "", content: "" };
+      isActivelyEditingRef.current = false;
     }
-  }, [note]);
+  }, [note, title, content]);
 
   const performSave = useCallback(
     async (titleToSave: string, contentToSave: string) => {
@@ -81,6 +106,10 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
       try {
         await onSave(titleToSave || "Untitled", contentToSave);
         lastSavedRef.current = { title: titleToSave, content: contentToSave };
+
+        setTimeout(() => {
+          isActivelyEditingRef.current = false;
+        }, 500);
       } catch (error) {
         toast.error("Failed to auto-save note");
       }
@@ -109,11 +138,13 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   );
 
   const handleTitleChange = (newTitle: string) => {
+    markAsActivelyEditing();
     setTitle(newTitle);
     debouncedSave(newTitle, content);
   };
 
   const handleContentChange = (newContent: string | undefined) => {
+    markAsActivelyEditing();
     const contentValue = newContent || "";
     setContent(contentValue);
     debouncedSave(title, contentValue);
@@ -126,6 +157,17 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   const toggleSidePanel = () => {
     setShowSidePanel(!showSidePanel);
   };
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (activeEditingTimeoutRef.current) {
+        clearTimeout(activeEditingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (!note) {
     return (
@@ -175,58 +217,60 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant={editorMode === "rich-text" ? "default" : "outline"}
-            onClick={() => setEditorMode("rich-text")}
-            className={
-              editorMode === "rich-text"
-                ? "bg-blue-600 hover:bg-blue-700 text-white"
-                : ""
-            }
-          >
-            Rich Text
-          </Button>
-          <Button
-            size="sm"
-            variant={editorMode === "markdown" ? "default" : "outline"}
-            onClick={() => setEditorMode("markdown")}
-            className={
-              editorMode === "markdown"
-                ? "bg-blue-600 hover:bg-blue-700 text-white"
-                : ""
-            }
-          >
-            Markdown
-          </Button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={editorMode === "rich-text" ? "default" : "outline"}
+              onClick={() => setEditorMode("rich-text")}
+              className={
+                editorMode === "rich-text"
+                  ? "bg-blue-600 hover:bg-blue-700 text-white"
+                  : ""
+              }
+            >
+              Rich Text
+            </Button>
+            <Button
+              size="sm"
+              variant={editorMode === "markdown" ? "default" : "outline"}
+              onClick={() => setEditorMode("markdown")}
+              className={
+                editorMode === "markdown"
+                  ? "bg-blue-600 hover:bg-blue-700 text-white"
+                  : ""
+              }
+            >
+              Markdown
+            </Button>
+          </div>
+
+          {isSaving && (
+            <div className="flex items-center text-sm text-gray-500">
+              <svg
+                className="animate-spin h-4 w-4 mr-2 text-blue-600"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8H4z"
+                />
+              </svg>
+              Saving changes...
+            </div>
+          )}
         </div>
       </div>
-
-      {isSaving && (
-        <div className="flex items-center justify-center text-sm text-gray-500 py-2 bg-blue-50 border-b border-blue-100">
-          <svg
-            className="animate-spin h-4 w-4 mr-2 text-blue-600"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v8H4z"
-            />
-          </svg>
-          Saving changes...
-        </div>
-      )}
 
       <div className="flex-1 flex overflow-hidden">
         <div

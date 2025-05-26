@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Plus,
@@ -36,7 +35,9 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({
 }) => {
   const { logout, user } = useAuth();
 
-  const filteredNotes = notes.filter(
+  const notesArray = Array.isArray(notes) ? notes : [];
+
+  const filteredNotes = notesArray.filter(
     (note) =>
       note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       note.content.toLowerCase().includes(searchTerm.toLowerCase())
@@ -50,7 +51,6 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({
       onMouseEnter={() => isCollapsed && onToggleCollapse()}
       onMouseLeave={() => !isCollapsed && selectedNoteId && onToggleCollapse()}
     >
-      {/* Collapse Toggle Button */}
       <Button
         onClick={onToggleCollapse}
         variant="ghost"
@@ -64,7 +64,6 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({
         )}
       </Button>
 
-      {/* Header */}
       <div className="p-4 border-b border-gray-200">
         {!isCollapsed && (
           <>
@@ -104,7 +103,6 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({
         </Button>
       </div>
 
-      {/* Notes List */}
       <ScrollArea className="flex-1">
         <div className="p-2">
           {filteredNotes.length === 0 && !isCollapsed ? (
@@ -158,7 +156,6 @@ export const NotesSidebar: React.FC<NotesSidebarProps> = ({
         </div>
       </ScrollArea>
 
-      {/* User Info */}
       {!isCollapsed && (
         <div className="p-4 border-t border-gray-200">
           <p className="text-xs text-gray-600 truncate">

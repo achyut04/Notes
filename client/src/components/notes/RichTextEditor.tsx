@@ -1,64 +1,3 @@
-// import React, { useEffect } from "react";
-// import { useEditor, EditorContent } from "@tiptap/react";
-// import StarterKit from "@tiptap/starter-kit";
-// import { Button } from "@/components/ui/button";
-
-// export interface RichTextEditorProps {
-//   content: string;
-//   onChange: (html: string) => void;
-// }
-
-// export const RichTextEditor: React.FC<RichTextEditorProps> = ({
-//   content,
-//   onChange,
-// }) => {
-//   const editor = useEditor({
-//     extensions: [StarterKit],
-//     content,
-//     onUpdate: ({ editor }) => {
-//       onChange(editor.getHTML());
-//     },
-//   });
-
-//   // When `content` prop changes (e.g. on note load), update editor
-//   useEffect(() => {
-//     if (editor && editor.getHTML() !== content) {
-//       editor.commands.setContent(content, false);
-//     }
-//   }, [content, editor]);
-
-//   if (!editor) return null;
-
-//   return (
-//     <div className="rich-text-editor h-full flex flex-col">
-//       <div className="p-2 border-b border-gray-200 flex gap-2">
-//         <Button
-//           size="sm"
-//           onClick={() => editor.chain().focus().toggleBold().run()}
-//         >
-//           Bold
-//         </Button>
-//         <Button
-//           size="sm"
-//           onClick={() => editor.chain().focus().toggleItalic().run()}
-//         >
-//           Italic
-//         </Button>
-//         <Button
-//           size="sm"
-//           onClick={() => editor.chain().focus().toggleBulletList().run()}
-//         >
-//           • List
-//         </Button>
-//         {/* add more controls as you like */}
-//       </div>
-//       <div className="flex-1 overflow-auto p-4">
-//         <EditorContent editor={editor} />
-//       </div>
-//     </div>
-//   );
-// };
-
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -239,7 +178,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Handle keyboard shortcuts
     if (e.ctrlKey || e.metaKey) {
       switch (e.key) {
         case "b":
@@ -299,10 +237,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Toolbar */}
       <div className="border-b border-gray-200 p-3 bg-gray-50">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Undo/Redo */}
           <div className="flex gap-1">
             <Button
               size="sm"
@@ -326,7 +262,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
           <Separator orientation="vertical" className="h-6" />
 
-          {/* Text Formatting */}
           <div className="flex gap-1">
             <Button
               size="sm"
@@ -368,7 +303,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
           <Separator orientation="vertical" className="h-6" />
 
-          {/* Heading Dropdown */}
           <Select onValueChange={formatBlock}>
             <SelectTrigger className="h-8 w-32">
               <SelectValue placeholder="Heading" />
@@ -386,7 +320,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
           <Separator orientation="vertical" className="h-6" />
 
-          {/* Text Color */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -422,7 +355,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Background Color */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -463,7 +395,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
           <Separator orientation="vertical" className="h-6" />
 
-          {/* Alignment */}
           <div className="flex gap-1">
             <Button
               size="sm"
@@ -505,7 +436,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
           <Separator orientation="vertical" className="h-6" />
 
-          {/* Lists */}
           <div className="flex gap-1">
             <Button
               size="sm"
@@ -529,7 +459,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
           <Separator orientation="vertical" className="h-6" />
 
-          {/* Indent */}
           <div className="flex gap-1">
             <Button
               size="sm"
@@ -553,7 +482,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
           <Separator orientation="vertical" className="h-6" />
 
-          {/* Insert */}
           <div className="flex gap-1">
             <Button
               size="sm"
@@ -577,7 +505,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
           <Separator orientation="vertical" className="h-6" />
 
-          {/* Remove Formatting */}
           <Button
             size="sm"
             variant="outline"
@@ -590,7 +517,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         </div>
       </div>
 
-      {/* Editor */}
       <div className="flex-1 overflow-auto">
         <div
           ref={editorRef}
@@ -605,7 +531,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         />
       </div>
 
-      {/* Context Menu */}
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}
