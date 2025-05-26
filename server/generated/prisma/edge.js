@@ -140,7 +140,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/mnt/d/Study/Projects/AINotes/server/generated/prisma",
+      "value": "D:\\Study\\Projects\\AINotes\\server\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -149,7 +149,7 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "debian-openssl-3.0.x",
+        "value": "windows",
         "native": true
       },
       {
@@ -162,7 +162,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/mnt/d/Study/Projects/AINotes/server/prisma/schema.prisma",
+    "sourceFilePath": "D:\\Study\\Projects\\AINotes\\server\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -176,7 +176,6 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": true,
   "inlineDatasources": {
     "db": {
       "url": {
