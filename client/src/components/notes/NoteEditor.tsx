@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import type React from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import MDEditor from "@uiw/react-md-editor";
 import { RichTextEditor } from "./RichTextEditor";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { FileText, Eye, Brain, X } from "lucide-react";
-import { Note } from "@/lib/api";
+import type { Note } from "@/lib/api";
 import { toast } from "sonner";
 
 interface NoteEditorProps {
@@ -104,7 +105,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
       }
 
       try {
-        await onSave(titleToSave || "Untitled", contentToSave);
+        await onSave(titleToSave, contentToSave);
         lastSavedRef.current = { title: titleToSave, content: contentToSave };
 
         setTimeout(() => {
@@ -184,8 +185,9 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full">
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
+      {/* Fixed Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-20 flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
           <Input
             value={title}
@@ -272,31 +274,43 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Editor Section */}
         <div
           className={`${
-            showSidePanel ? "w-1/2" : "flex-1"
-          } transition-all duration-300`}
+            showSidePanel ? "w-1/2" : "w-full"
+          } transition-all duration-300 flex flex-col overflow-hidden`}
+          style={{ minWidth: showSidePanel ? "50%" : "100%" }}
         >
           {editorMode === "markdown" ? (
-            <MDEditor
-              value={content}
-              onChange={(val) => handleContentChange(val || "")}
-              height="100%"
-              preview="edit"
-              hideToolbar={false}
-              data-color-mode="light"
-            />
+            <div className="flex-1 overflow-hidden">
+              <MDEditor
+                value={content}
+                onChange={(val) => handleContentChange(val || "")}
+                height="100%"
+                preview="edit"
+                hideToolbar={false}
+                data-color-mode="light"
+              />
+            </div>
           ) : (
-            <RichTextEditor content={content} onChange={handleContentChange} />
+            <RichTextEditor
+              content={content}
+              onChange={handleContentChange}
+            />
           )}
         </div>
 
+        {/* Side Panel */}
         {showSidePanel && (
           <>
-            <Separator orientation="vertical" />
-            <div className="w-1/2 bg-gray-50 flex flex-col transition-all duration-300">
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <Separator orientation="vertical" className="flex-shrink-0" />
+            <div
+              className="w-1/2 bg-gray-50 flex flex-col overflow-hidden"
+              style={{ minWidth: "50%" }}
+            >
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0 bg-gray-50">
                 <h3 className="font-semibold text-gray-900">Panel</h3>
                 <Button
                   onClick={() => setShowSidePanel(false)}
@@ -311,9 +325,9 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
               <Tabs
                 value={activeTab}
                 onValueChange={setActiveTab}
-                className="flex-1 flex flex-col min-h-0"
+                className="flex-1 flex flex-col overflow-hidden"
               >
-                <TabsList className="grid w-full grid-cols-2 m-4 mb-2">
+                <TabsList className="grid w-full grid-cols-2 m-4 mb-2 flex-shrink-0">
                   <TabsTrigger
                     value="preview"
                     className="flex items-center gap-2"
@@ -332,7 +346,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
 
                 <TabsContent
                   value="preview"
-                  className="flex-1 mx-4 mb-4 min-h-0"
+                  className="flex-1 mx-4 mb-4 overflow-hidden"
                 >
                   <Card className="h-full flex flex-col">
                     <CardHeader className="pb-3 flex-shrink-0">
@@ -350,7 +364,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
 
                 <TabsContent
                   value="summary"
-                  className="flex-1 mx-4 mb-4 min-h-0"
+                  className="flex-1 mx-4 mb-4 overflow-hidden"
                 >
                   <Card className="h-full flex flex-col">
                     <CardHeader className="pb-3 flex flex-row items-center justify-between flex-shrink-0">

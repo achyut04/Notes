@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import type React from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -13,6 +14,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  List,
+  ListOrdered,
+  Outdent,
+  Indent,
+  Link,
+  Minus,
+  Eraser,
+  Undo,
+  Redo,
+  Palette,
+  Type,
+} from "lucide-react";
 
 interface RichTextEditorProps {
   content: string;
@@ -82,19 +104,19 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
             onClick={() => onAction("bold")}
           >
-            <span className="font-bold">B</span> Bold
+            <Bold className="h-4 w-4" /> Bold
           </button>
           <button
             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
             onClick={() => onAction("italic")}
           >
-            <span className="italic">I</span> Italic
+            <Italic className="h-4 w-4" /> Italic
           </button>
           <button
             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
             onClick={() => onAction("underline")}
           >
-            <span className="underline">U</span> Underline
+            <Underline className="h-4 w-4" /> Underline
           </button>
           <Separator className="my-1" />
         </>
@@ -114,20 +136,43 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   onChange,
 }) => {
   const editorRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
     hasSelection: boolean;
   } | null>(null);
+  const [activeCommands, setActiveCommands] = useState<Record<string, boolean>>(
+    {}
+  );
+
+  const updateActiveCommands = useCallback(() => {
+    if (document) {
+      setActiveCommands({
+        bold: document.queryCommandState("bold"),
+        italic: document.queryCommandState("italic"),
+        underline: document.queryCommandState("underline"),
+        strikethrough: document.queryCommandState("strikethrough"),
+        justifyLeft: document.queryCommandState("justifyLeft"),
+        justifyCenter: document.queryCommandState("justifyCenter"),
+        justifyRight: document.queryCommandState("justifyRight"),
+        justifyFull: document.queryCommandState("justifyFull"),
+        insertOrderedList: document.queryCommandState("insertOrderedList"),
+        insertUnorderedList: document.queryCommandState("insertUnorderedList"),
+      });
+    }
+  }, []);
 
   const executeCommand = useCallback(
     (command: string, value?: string) => {
       document.execCommand(command, false, value);
       if (editorRef.current) {
         onChange(editorRef.current.innerHTML);
+        updateActiveCommands();
       }
     },
-    [onChange]
+    [onChange, updateActiveCommands]
   );
 
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -174,6 +219,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const handleInput = () => {
     if (editorRef.current) {
       onChange(editorRef.current.innerHTML);
+      updateActiveCommands();
     }
   };
 
@@ -208,10 +254,45 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     executeCommand(
       type === "ordered" ? "insertOrderedList" : "insertUnorderedList"
     );
+
+    // Apply proper styling to list items
+    setTimeout(() => {
+      if (editorRef.current) {
+        const lists = editorRef.current.querySelectorAll(
+          type === "ordered" ? "ol" : "ul"
+        );
+        lists.forEach((list) => {
+          (list as HTMLElement).style.margin = "1em 0";
+          (list as HTMLElement).style.paddingLeft = "2em";
+          const items = list.querySelectorAll("li");
+          items.forEach((item) => {
+            (item as HTMLElement).style.margin = "0.5em 0";
+            (item as HTMLElement).style.listStyleType =
+              type === "ordered" ? "decimal" : "disc";
+          });
+        });
+      }
+    }, 10);
   };
 
   const formatBlock = (tag: string) => {
-    executeCommand("formatBlock", tag);
+    executeCommand("formatBlock", `<${tag}>`);
+
+    // Apply appropriate styling based on heading
+    setTimeout(() => {
+      if (tag.startsWith("h") && editorRef.current) {
+        const headings = editorRef.current.querySelectorAll(tag);
+        headings.forEach((heading) => {
+          const headingLevel = Number.parseInt(tag.substring(1));
+          const fontSize = Math.max(32 - (headingLevel - 1) * 4, 16);
+          const fontWeight = headingLevel <= 3 ? "bold" : "600";
+          (heading as HTMLElement).style.fontSize = `${fontSize}px`;
+          (heading as HTMLElement).style.fontWeight = fontWeight;
+          (heading as HTMLElement).style.margin = "1em 0 0.5em 0";
+          (heading as HTMLElement).style.lineHeight = "1.2";
+        });
+      }
+    }, 10);
   };
 
   const insertLink = () => {
@@ -235,28 +316,47 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, [content]);
 
+  useEffect(() => {
+    const updateButtonStates = () => {
+      updateActiveCommands();
+    };
+
+    document.addEventListener("selectionchange", updateButtonStates);
+    return () =>
+      document.removeEventListener("selectionchange", updateButtonStates);
+  }, [updateActiveCommands]);
+
   return (
-    <div className="flex flex-col h-full bg-white">
-      <div className="border-b border-gray-200 p-3 bg-gray-50">
-        <div className="flex flex-wrap items-center gap-2">
+    <div
+      ref={containerRef}
+      className="flex flex-col h-full bg-white overflow-hidden"
+    >
+      {/* Fixed Toolbar */}
+      <div
+        ref={toolbarRef}
+        className="border-b border-gray-200 p-3 bg-gray-50 sticky top-0 z-10 w-full flex-shrink-0"
+      >
+        <div className="flex flex-wrap items-center gap-2 overflow-x-auto">
           <div className="flex gap-1">
             <Button
               size="sm"
               variant="outline"
               onClick={() => executeCommand("undo")}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 flex-shrink-0"
               title="Undo (Ctrl+Z)"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              ↶
+              <Undo className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => executeCommand("redo")}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 flex-shrink-0"
               title="Redo (Ctrl+Y)"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              ↷
+              <Redo className="h-4 w-4" />
             </Button>
           </div>
 
@@ -267,44 +367,58 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               size="sm"
               variant="outline"
               onClick={() => executeCommand("bold")}
-              className="h-8 px-3 font-bold"
+              className={`h-8 px-3 flex-shrink-0 ${
+                activeCommands.bold ? "bg-blue-100 border-blue-300" : ""
+              }`}
               title="Bold (Ctrl+B)"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              B
+              <Bold className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => executeCommand("italic")}
-              className="h-8 px-3 italic"
+              className={`h-8 px-3 flex-shrink-0 ${
+                activeCommands.italic ? "bg-blue-100 border-blue-300" : ""
+              }`}
               title="Italic (Ctrl+I)"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              I
+              <Italic className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => executeCommand("underline")}
-              className="h-8 px-3 underline"
+              className={`h-8 px-3 flex-shrink-0 ${
+                activeCommands.underline ? "bg-blue-100 border-blue-300" : ""
+              }`}
               title="Underline (Ctrl+U)"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              U
+              <Underline className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => executeCommand("strikethrough")}
-              className="h-8 px-3 line-through"
+              className={`h-8 px-3 flex-shrink-0 ${
+                activeCommands.strikethrough
+                  ? "bg-blue-100 border-blue-300"
+                  : ""
+              }`}
               title="Strikethrough"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              S
+              <Strikethrough className="h-4 w-4" />
             </Button>
           </div>
 
           <Separator orientation="vertical" className="h-6" />
 
           <Select onValueChange={formatBlock}>
-            <SelectTrigger className="h-8 w-32">
+            <SelectTrigger className="h-8 w-32 flex-shrink-0">
               <SelectValue placeholder="Heading" />
             </SelectTrigger>
             <SelectContent>
@@ -325,10 +439,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 px-3"
+                className="h-8 px-3 flex-shrink-0"
                 title="Text Color"
+                onMouseDown={(e) => e.preventDefault()}
               >
-                A
+                <Type className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -360,10 +475,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 px-3"
+                className="h-8 px-3 flex-shrink-0"
                 title="Background Color"
+                onMouseDown={(e) => e.preventDefault()}
               >
-                🎨
+                <Palette className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -400,37 +516,51 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               size="sm"
               variant="outline"
               onClick={() => executeCommand("justifyLeft")}
-              className="h-8 px-3"
+              className={`h-8 px-3 flex-shrink-0 ${
+                activeCommands.justifyLeft ? "bg-blue-100 border-blue-300" : ""
+              }`}
               title="Align Left"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              ⇤
+              <AlignLeft className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => executeCommand("justifyCenter")}
-              className="h-8 px-3"
+              className={`h-8 px-3 flex-shrink-0 ${
+                activeCommands.justifyCenter
+                  ? "bg-blue-100 border-blue-300"
+                  : ""
+              }`}
               title="Align Center"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              ≡
+              <AlignCenter className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => executeCommand("justifyRight")}
-              className="h-8 px-3"
+              className={`h-8 px-3 flex-shrink-0 ${
+                activeCommands.justifyRight ? "bg-blue-100 border-blue-300" : ""
+              }`}
               title="Align Right"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              ⇥
+              <AlignRight className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => executeCommand("justifyFull")}
-              className="h-8 px-3"
+              className={`h-8 px-3 flex-shrink-0 ${
+                activeCommands.justifyFull ? "bg-blue-100 border-blue-300" : ""
+              }`}
               title="Justify"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              ⬌
+              <AlignJustify className="h-4 w-4" />
             </Button>
           </div>
 
@@ -441,19 +571,29 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               size="sm"
               variant="outline"
               onClick={() => insertList("unordered")}
-              className="h-8 px-3"
+              className={`h-8 px-3 flex-shrink-0 ${
+                activeCommands.insertUnorderedList
+                  ? "bg-blue-100 border-blue-300"
+                  : ""
+              }`}
               title="Bullet List"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              •
+              <List className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => insertList("ordered")}
-              className="h-8 px-3"
+              className={`h-8 px-3 flex-shrink-0 ${
+                activeCommands.insertOrderedList
+                  ? "bg-blue-100 border-blue-300"
+                  : ""
+              }`}
               title="Numbered List"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              1.
+              <ListOrdered className="h-4 w-4" />
             </Button>
           </div>
 
@@ -464,19 +604,21 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               size="sm"
               variant="outline"
               onClick={() => executeCommand("outdent")}
-              className="h-8 px-3"
+              className="h-8 px-3 flex-shrink-0"
               title="Decrease Indent"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              ⇤
+              <Outdent className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => executeCommand("indent")}
-              className="h-8 px-3"
+              className="h-8 px-3 flex-shrink-0"
               title="Increase Indent"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              ⇥
+              <Indent className="h-4 w-4" />
             </Button>
           </div>
 
@@ -487,19 +629,21 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               size="sm"
               variant="outline"
               onClick={insertLink}
-              className="h-8 px-3"
+              className="h-8 px-3 flex-shrink-0"
               title="Insert Link"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              🔗
+              <Link className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => executeCommand("insertHorizontalRule")}
-              className="h-8 px-3"
+              className="h-8 px-3 flex-shrink-0"
               title="Insert Horizontal Rule"
+              onMouseDown={(e) => e.preventDefault()}
             >
-              ―
+              <Minus className="h-4 w-4" />
             </Button>
           </div>
 
@@ -509,14 +653,16 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             size="sm"
             variant="outline"
             onClick={() => executeCommand("removeFormat")}
-            className="h-8 px-3"
+            className="h-8 px-3 flex-shrink-0"
             title="Clear Formatting"
+            onMouseDown={(e) => e.preventDefault()}
           >
-            🧹
+            <Eraser className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
+      {/* Editor Content */}
       <div className="flex-1 overflow-auto">
         <div
           ref={editorRef}
@@ -525,7 +671,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           onKeyDown={handleKeyDown}
           onContextMenu={handleContextMenu}
           className="h-full p-6 outline-none prose prose-sm max-w-none leading-relaxed"
-          style={{ minHeight: "100%" }}
+          style={{
+            minHeight: "100%",
+            wordWrap: "break-word",
+            overflowWrap: "break-word",
+          }}
           suppressContentEditableWarning={true}
           spellCheck={true}
         />
